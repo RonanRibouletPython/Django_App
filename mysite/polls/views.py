@@ -5,33 +5,30 @@ from django.shortcuts import render, get_object_or_404
 from django.http import Http404
 from django.db.models import F
 from django.urls import reverse
+from django.views import generic
 
 # Models imports
 from .models import Question, Choice
 
-# First view used to display the 5 latest questions
-def index(request):
-    #return HttpResponse("Hello, world")
-    # Display the 5 latest questions separated with a comma
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    context = {
-        "latest_question_list": latest_question_list
-        }
-    
-    return render(request, "polls/index.html", context)
+# First view used to display the 5 latest questions with generic views
+class IndexView(generic.ListView):
+    template_name = "polls/index.html"
+    context_object_name = "latest_question_list"
 
-# Second view to show the details of the questions
-def detail(request, question_id):
-    
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "polls/detail.html", {"question": question})
+    def get_queryset(self):
+        """Return the last five published questions."""
+        return Question.objects.order_by("-pub_date")[:5]
 
-# Thrid view to show the results of the poll
-def results(request, question_id):
-    
-    question = get_object_or_404(Question, pk=question_id)
-    
-    return render(request, "polls/results.html", {"question": question})
+# Second view to show the details of the questions with generic views
+class DetailView(generic.DetailView):
+    model = Question
+    template_name = "polls/detail.html"
+
+# Thrid view to show the results of the poll with generic views
+class ResultsView(generic.DetailView):
+    model = Question
+    template_name = "polls/results.html"
+
 # Fourth view to display the question you answer
 def vote(request, question_id):
     
