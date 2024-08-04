@@ -6,6 +6,7 @@ from django.http import Http404
 from django.db.models import F
 from django.urls import reverse
 from django.views import generic
+from django.utils import timezone
 
 # Models imports
 from .models import Question, Choice
@@ -16,18 +17,35 @@ class IndexView(generic.ListView):
     context_object_name = "latest_question_list"
 
     def get_queryset(self):
-        """Return the last five published questions."""
-        return Question.objects.order_by("-pub_date")[:5]
+        """
+        Return the last five published questions (not including those set to be
+        published in the future).
+        """
+        # lte: less than equal
+        return Question.objects.filter(pub_date__lte=timezone.now()).order_by("-pub_date")[:5]
 
 # Second view to show the details of the questions with generic views
 class DetailView(generic.DetailView):
+    
     model = Question
     template_name = "polls/detail.html"
+    
+    def get_queryset(self):
+        """
+        Excludes any questions that aren't published yet.
+        """
+        return Question.objects.filter(pub_date__lte=timezone.now())
 
 # Thrid view to show the results of the poll with generic views
 class ResultsView(generic.DetailView):
     model = Question
     template_name = "polls/results.html"
+    
+    def get_queryset(self):
+        """
+        Excludes any questions that aren't published yet.
+        """
+        return Question.objects.filter(pub_date__lte=timezone.now())
 
 # Fourth view to display the question you answer
 def vote(request, question_id):
